@@ -1,0 +1,17 @@
+# Node
+node_modules/
+
+# dotenv
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+*.log
+
+# OS
+.DS_Store
+
+# Optional
+.env.local
+.env.*.local
