@@ -44,7 +44,7 @@ async function getRandomTenorGif(searchTerm, limit) {
     }
     
     const encoded = encodeURIComponent(searchTerm);
-    const url = `https://tenor.googleapis.com/v2/search?q=${encoded}&key=${TENOR_API_KEY}&client_key=my_js_bot&limit=${limit}&media_filter=minimal`;
+    const url = `https://tenor.googleapis.com/v2/search?q=${encoded}&key=${TENOR_API_KEY}&client_key=my_js_bot&limit=${limit}&media_filter=gif`;
     
     try {
         if (typeof fetch === 'undefined') {
