@@ -5,8 +5,6 @@ require('dotenv').config();
 
 // Get the necessary classes from the discord.js library
 const { Client, GatewayIntentBits } = require('discord.js');
-// Node-fetch is used to make HTTP requests (like Python's 'requests')
-const fetch = require('node-fetch');
 
 // --- Configuration ---
 
@@ -17,6 +15,12 @@ const TENOR_API_KEY = process.env.TENOR_API_KEY;
 const COMMAND_PREFIX = '!';
 const GIF_SEARCH_TERM = 'shared braincell';
 const LIMIT = 20; // Number of GIFs to fetch from Tenor
+
+// Ensure a Discord token is provided
+if (!DISCORD_TOKEN) {
+    console.error('FATAL ERROR: DISCORD_TOKEN not found. Check your .env file.');
+    process.exit(1);
+}
 
 // Create a new client instance with necessary Intents
 const client = new Client({ 
@@ -35,13 +39,17 @@ const client = new Client({
  */
 async function getRandomTenorGif(searchTerm, limit) {
     if (!TENOR_API_KEY) {
-        console.error("Tenor API Key is missing!");
+        console.error('Tenor API Key is missing!');
         return null;
     }
     
-    const url = `https://tenor.googleapis.com/v2/search?q=${searchTerm}&key=${TENOR_API_KEY}&client_key=my_js_bot&limit=${limit}&media_filter=minimal`;
+    const encoded = encodeURIComponent(searchTerm);
+    const url = `https://tenor.googleapis.com/v2/search?q=${encoded}&key=${TENOR_API_KEY}&client_key=my_js_bot&limit=${limit}&media_filter=minimal`;
     
     try {
+        if (typeof fetch === 'undefined') {
+            console.warn('Global fetch is not available. Install node-fetch@2 or run on Node 18+');
+        }
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -53,11 +61,11 @@ async function getRandomTenorGif(searchTerm, limit) {
             const randomIndex = Math.floor(Math.random() * data.results.length);
             const randomGif = data.results[randomIndex];
             
-            // Get the URL from the 'minimal' media format
-            const gifUrl = randomGif.media_formats.minimal.url;
+            // Get the URL from the 'minimal' media format (defensive)
+            const gifUrl = randomGif?.media_formats?.minimal?.url ?? null;
             return gifUrl;
         } else {
-            console.log("Tenor search returned no results.");
+            console.log('Tenor search returned no results.');
             return null;
         }
         
@@ -89,33 +97,33 @@ client.on('messageCreate', async message => {
     if (fullCommand === `${COMMAND_PREFIX}sharedbraincell` || fullCommand === `${COMMAND_PREFIX}sbc`) {
         
         // Let the user know the bot is working
-        message.channel.sendTyping(); 
+        try {
+            await message.channel.sendTyping();
+        } catch (err) {
+            // ignore typing errors
+        }
 
-        if (TENOR_API_KEY === "YOUR_TENOR_API_KEY_HERE" || !TENOR_API_KEY) {
-            return message.channel.send("🚨 **ERROR:** Please set your `TENOR_API_KEY` in the `.env` file to enable GIF fetching!");
+        if (TENOR_API_KEY === 'YOUR_TENOR_API_KEY_HERE' || !TENOR_API_KEY) {
+            return message.channel.send('🚨 **ERROR:** Please set your `TENOR_API_KEY` in the `.env` file to enable GIF fetching!');
         }
         
-        console.log(`Command detected. Fetching GIF...`);
+        console.log('Command detected. Fetching GIF...');
 
         const gifUrl = await getRandomTenorGif(GIF_SEARCH_TERM, LIMIT);
         
         if (gifUrl) {
             // Send the GIF URL. Discord will automatically embed it.
-            message.channel.send(gifUrl);
+            message.channel.send(gifUrl).catch(err => console.error('Failed to send message:', err.message));
         } else {
             // Fallback message
-            message.channel.send("The single shared braincell is currently offline. Cannot find a GIF.");
+            message.channel.send('The single shared braincell is currently offline. Cannot find a GIF.').catch(err => console.error('Failed to send message:', err.message));
         }
     }
 });
 
 
 // Log in to Discord with your client's token
-if (MTQ0OTEyNDg1OTY4OTgzMjU2OQ.GKyVfH.Dy-KNifnpCkpCKp2P3WjoW482nsWYMtJG07wFA) {
-    client.login(MTQ0OTEyNDg1OTY4OTgzMjU2OQ.GKyVfH.Dy-KNifnpCkpCKp2P3WjoW482nsWYMtJG07wFA).catch(err => {
-        console.error("ERROR: Failed to log in. The token in your .env file is likely invalid.");
-        console.error(err.message);
-    });
-} else {
-    console.error("FATAL ERROR: DISCORD_TOKEN not found. Check your .env file.");
-}
+client.login(DISCORD_TOKEN).catch(err => {
+    console.error('ERROR: Failed to log in. The token in your .env file is likely invalid.');
+    console.error(err.message);
+});
