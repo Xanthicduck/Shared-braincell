@@ -111,8 +111,8 @@ client.on('messageCreate', async message => {
 
 
 // Log in to Discord with your client's token
-if (DISCORD_TOKEN) {
-    client.login(DISCORD_TOKEN).catch(err => {
+if (MTQ0OTEyNDg1OTY4OTgzMjU2OQ.GKyVfH.Dy-KNifnpCkpCKp2P3WjoW482nsWYMtJG07wFA) {
+    client.login(MTQ0OTEyNDg1OTY4OTgzMjU2OQ.GKyVfH.Dy-KNifnpCkpCKp2P3WjoW482nsWYMtJG07wFA).catch(err => {
         console.error("ERROR: Failed to log in. The token in your .env file is likely invalid.");
         console.error(err.message);
     });
